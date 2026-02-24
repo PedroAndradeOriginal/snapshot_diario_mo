@@ -6,7 +6,9 @@ com leitura de arquivos AFD, análise de efetivo e geração de dashboard gráfi
 </p>
 
 <p align="center">
-Aplicação 100% client-side • Processamento local • Exportação Excel
+🔗 <a href="https://pedroandradeoriginal.github.io/snapshot_diario_mo/" target="_blank">
+Acessar Sistema Online
+</a>
 </p>
 
 ---
@@ -44,14 +46,14 @@ A aplicação realiza todo o processamento diretamente no navegador, sem necessi
 - JavaScript  
 - Chart.js  
 - SheetJS (XLSX)  
-- Processamento 100% no navegador  
+- Processamento 100% client-side  
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```bash
-snapshot_diario/
+snapshot_diario_mo/
 │
 ├── js/
 │   └── app.js
