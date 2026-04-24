@@ -23,7 +23,7 @@ function carregarEfetivo() {
 
     document.getElementById("statusEfetivo").innerHTML =
       `Efetivo carregado: <b>${Object.keys(efetivo).length}</b> colaboradores<br>
-             Última atualização: ${obj.ultimaAtualizacao}`;
+       Última atualização: ${obj.ultimaAtualizacao}`;
   } else {
     document.getElementById("statusEfetivo").innerHTML =
       `<span class="text-danger">Nenhum efetivo carregado.</span>`;
@@ -152,7 +152,10 @@ function processarSnapshot() {
         cpf = cpf.padStart(11, "0");
 
         if (data === dataEscolhida) {
-          registros[cpf] = hora;
+          if (!registros[cpf]) {
+            registros[cpf] = [];
+          }
+          registros[cpf].push(hora);
         }
       });
 
@@ -175,10 +178,13 @@ function gerarSnapshot(registros, data) {
 
   Object.keys(registros).forEach((cpf) => {
     if (efetivo[cpf]) {
+      const horas = registros[cpf].sort();
+
       ultimoSnapshotDetalhado.push({
         CPF: cpf,
         Data: data,
-        Hora: registros[cpf],
+        Entrada: horas[0],
+        Saida: horas[horas.length - 1],
         Nome: efetivo[cpf].nome,
         Função: efetivo[cpf].funcao,
       });
@@ -229,7 +235,7 @@ function gerarGrafico() {
 }
 
 // ==========================
-// EXPORTAR EXCEL
+// EXPORTAR SNAPSHOT
 // ==========================
 function exportarExcel() {
   if (!ultimoSnapshotDetalhado.length) {
@@ -241,20 +247,49 @@ function exportarExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Snapshot");
 
-  // Ajuste largura
   ws["!cols"] = [
     { wch: 15 },
     { wch: 12 },
     { wch: 10 },
     { wch: 30 },
     { wch: 25 },
+    { wch: 12 },
+    { wch: 12 },
   ];
 
-  // 🔥 CORREÇÃO AQUI
   if (ws["!ref"]) {
     ws["!autofilter"] = { ref: ws["!ref"] };
   }
 
   const data = document.getElementById("dataSnapshot").value;
   XLSX.writeFile(wb, `Snapshot_MO_${data}.xlsx`);
+}
+
+// ==========================
+// EXPORTAR SAÍDA
+// ==========================
+function exportarSaida() {
+  if (!ultimoSnapshotDetalhado.length) {
+    alert("Nenhum snapshot processado.");
+    return;
+  }
+
+  const dadosSaida = ultimoSnapshotDetalhado.map((item) => ({
+    CPF: item.CPF,
+    Nome: item.Nome,
+    Função: item.Função,
+    Data: item.Data,
+    Saída: item.Saida,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(dadosSaida);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Saida");
+
+  if (ws["!ref"]) {
+    ws["!autofilter"] = { ref: ws["!ref"] };
+  }
+
+  const data = document.getElementById("dataSnapshot").value;
+  XLSX.writeFile(wb, `Saida_Ponto_${data}.xlsx`);
 }
