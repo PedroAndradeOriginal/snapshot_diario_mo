@@ -293,3 +293,5 @@ function exportarSaida() {
   const data = document.getElementById("dataSnapshot").value;
   XLSX.writeFile(wb, `Saida_Ponto_${data}.xlsx`);
 }
+
+window.exportarSaida = exportarSaida;
