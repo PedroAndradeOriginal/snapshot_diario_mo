@@ -31,7 +31,7 @@ function carregarEfetivo() {
 }
 
 // ==========================
-// UPLOAD EFETIVO
+// UPLOAD EFETIVO (ROBUSTO)
 // ==========================
 document
   .getElementById("uploadEfetivo")
@@ -45,13 +45,32 @@ document
 
       efetivo = {};
 
+      const headers = dados[0].map((h) => String(h).toLowerCase().trim());
+
+      const colMatricula = headers.findIndex(
+        (h) => h.includes("mat") || h.includes("registro") || h.includes("id"),
+      );
+
+      const colNome = headers.findIndex((h) => h.includes("nome"));
+
+      const colFuncao = headers.findIndex((h) => h.includes("fun"));
+
+      const colCPF = headers.findIndex((h) => h.includes("cpf"));
+
+      console.log("Colunas encontradas:", {
+        colMatricula,
+        colNome,
+        colFuncao,
+        colCPF,
+      });
+
       for (let i = 1; i < dados.length; i++) {
         const linha = dados[i];
 
-        const matricula = linha[0]; // <<< MATRÍCULA
-        const nome = linha[1];
-        const funcao = linha[3];
-        const cpfRaw = linha[4];
+        const matricula = linha[colMatricula];
+        const nome = linha[colNome];
+        const funcao = linha[colFuncao];
+        const cpfRaw = linha[colCPF];
 
         if (!cpfRaw) continue;
 
@@ -153,9 +172,7 @@ function processarSnapshot() {
         cpf = cpf.padStart(11, "0");
 
         if (data === dataEscolhida) {
-          if (!registros[cpf]) {
-            registros[cpf] = [];
-          }
+          if (!registros[cpf]) registros[cpf] = [];
           registros[cpf].push(hora);
         }
       });
@@ -188,6 +205,7 @@ function gerarSnapshot(registros, data) {
         Função: efetivo[cpf].funcao,
         Data: data,
         Entrada: horas[0],
+        Saida: horas[horas.length - 1], // ← necessário para saída funcionar
       });
     }
   });
@@ -198,11 +216,11 @@ function gerarSnapshot(registros, data) {
   const percentual = ((presentes / totalAtivo) * 100).toFixed(1);
 
   document.getElementById("resumo").innerHTML = `
-        Total Ativo: <b>${totalAtivo}</b><br>
-        Presentes: <b>${presentes}</b><br>
-        Ausentes: <b>${ausentes}</b><br>
-        % Presença: <b>${percentual}%</b>
-    `;
+    Total Ativo: <b>${totalAtivo}</b><br>
+    Presentes: <b>${presentes}</b><br>
+    Ausentes: <b>${ausentes}</b><br>
+    % Presença: <b>${percentual}%</b>
+  `;
 
   gerarGrafico();
 }
@@ -236,7 +254,7 @@ function gerarGrafico() {
 }
 
 // ==========================
-// EXPORTAR SNAPSHOT
+// EXPORTAR SNAPSHOT (SEM SAÍDA)
 // ==========================
 function exportarExcel() {
   if (!ultimoSnapshotDetalhado.length) {
@@ -244,19 +262,18 @@ function exportarExcel() {
     return;
   }
 
-  const ws = XLSX.utils.json_to_sheet(ultimoSnapshotDetalhado);
+  const dadosSemSaida = ultimoSnapshotDetalhado.map((item) => ({
+    Matrícula: item.Matrícula,
+    CPF: item.CPF,
+    Nome: item.Nome,
+    Função: item.Função,
+    Data: item.Data,
+    Entrada: item.Entrada,
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(dadosSemSaida);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Snapshot");
-
-  ws["!cols"] = [
-    { wch: 15 }, // Matrícula
-    { wch: 15 }, // CPF
-    { wch: 25 }, // Nome
-    { wch: 20 }, // Função
-    { wch: 12 }, // Data
-    { wch: 10 }, // Entrada
-    { wch: 10 }, // Saída
-  ];
 
   if (ws["!ref"]) {
     ws["!autofilter"] = { ref: ws["!ref"] };
@@ -267,7 +284,7 @@ function exportarExcel() {
 }
 
 // ==========================
-// EXPORTAR SAÍDA
+// EXPORTAR SAÍDA (COM SAÍDA)
 // ==========================
 function exportarSaida() {
   if (!ultimoSnapshotDetalhado.length) {
