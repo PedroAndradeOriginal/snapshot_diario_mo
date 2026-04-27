@@ -48,6 +48,7 @@ document
       for (let i = 1; i < dados.length; i++) {
         const linha = dados[i];
 
+        const matricula = linha[0]; // <<< MATRÍCULA
         const nome = linha[1];
         const funcao = linha[3];
         const cpfRaw = linha[4];
@@ -58,7 +59,7 @@ document
         cpf = cpf.padStart(11, "0");
 
         if (cpf.length === 11) {
-          efetivo[cpf] = { nome, funcao };
+          efetivo[cpf] = { matricula, nome, funcao };
         }
       }
 
@@ -181,12 +182,12 @@ function gerarSnapshot(registros, data) {
       const horas = registros[cpf].sort();
 
       ultimoSnapshotDetalhado.push({
+        Matrícula: efetivo[cpf].matricula,
         CPF: cpf,
-        Data: data,
-        Entrada: horas[0],
-        Saida: horas[horas.length - 1],
         Nome: efetivo[cpf].nome,
         Função: efetivo[cpf].funcao,
+        Data: data,
+        Entrada: horas[0],
       });
     }
   });
@@ -248,13 +249,13 @@ function exportarExcel() {
   XLSX.utils.book_append_sheet(wb, ws, "Snapshot");
 
   ws["!cols"] = [
-    { wch: 15 },
-    { wch: 12 },
-    { wch: 10 },
-    { wch: 30 },
-    { wch: 25 },
-    { wch: 12 },
-    { wch: 12 },
+    { wch: 15 }, // Matrícula
+    { wch: 15 }, // CPF
+    { wch: 25 }, // Nome
+    { wch: 20 }, // Função
+    { wch: 12 }, // Data
+    { wch: 10 }, // Entrada
+    { wch: 10 }, // Saída
   ];
 
   if (ws["!ref"]) {
@@ -275,6 +276,7 @@ function exportarSaida() {
   }
 
   const dadosSaida = ultimoSnapshotDetalhado.map((item) => ({
+    Matrícula: item.Matrícula,
     CPF: item.CPF,
     Nome: item.Nome,
     Função: item.Função,
